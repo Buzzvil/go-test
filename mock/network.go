@@ -6,15 +6,18 @@ import (
 	"net/http"
 )
 
+//ClientPatcher is a helper structure which will contains the client will be patched, the original transport and mock transport.
 type ClientPatcher struct {
 	OriginalTransport http.RoundTripper
 	MockTransport     http.RoundTripper
 	httpClient        *http.Client
 }
 
+//PatchClient will replace the original transport with mock transport.
+//It will return ClientPatcher for remove the mock transport after using it.
 func PatchClient(httpClient *http.Client, targetServers ...*targetServer) *ClientPatcher {
 
-	t := &Transport{
+	t := &transportCarrier{
 		OriginalTransport: httpClient.Transport,
 		TargetServers:     targetServers,
 	}
@@ -34,6 +37,7 @@ func PatchClient(httpClient *http.Client, targetServers ...*targetServer) *Clien
 	return patcher
 }
 
+//NetTargetServer will returns targetServer with the host.
 func NewTargetServer(host string) *targetServer {
 	if host == "" {
 		panic("Host should be defined.")
@@ -44,6 +48,7 @@ func NewTargetServer(host string) *targetServer {
 	}
 }
 
+//AddResponseHandler will add ResponseHandler to the targetServer.
 func (s *targetServer) AddResponseHandler(r *ResponseHandler) *targetServer {
 	if r.WriteToBody == nil {
 		panic("WriteToBody of resHandler should be defined.")
@@ -61,6 +66,7 @@ func (s *targetServer) AddResponseHandler(r *ResponseHandler) *targetServer {
 	return s
 }
 
+//RemovePatch will replace the mock transport with original.
 func (httpReq *ClientPatcher) RemovePatch() {
 	httpReq.httpClient.Transport = httpReq.OriginalTransport
 }
@@ -70,6 +76,7 @@ type targetServer struct {
 	ResponseHandlers []*ResponseHandler
 }
 
+//ResponseHandler will define the mock response and the request should be handled.
 type ResponseHandler struct {
 	WriteToBody func() []byte
 	StatusCode  int
@@ -77,16 +84,12 @@ type ResponseHandler struct {
 	Method      string
 }
 
-type RequestHandler interface {
-	GetResponse() []byte
-}
-
-type Transport struct {
+type transportCarrier struct {
 	TargetServers     []*targetServer
 	OriginalTransport http.RoundTripper
 }
 
-func (m *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (m *transportCarrier) RoundTrip(req *http.Request) (*http.Response, error) {
 	for _, targetServer := range m.TargetServers {
 		if targetServer.Host == req.Host {
 			for _, resHandler := range targetServer.ResponseHandlers {

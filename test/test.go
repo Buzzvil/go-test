@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+// AssertEqual check a and b are same.
+// If they are different, this will call Fatal error with message.
 func AssertEqual(t *testing.T, a interface{}, b interface{}, message string) {
 	if a == b {
 		return
