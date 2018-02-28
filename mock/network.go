@@ -76,7 +76,7 @@ type targetServer struct {
 	ResponseHandlers []*ResponseHandler
 }
 
-//ResponseHandler will define the mock response and the request should be handled.
+//ResponseHandler contains a mock response and a request should be handled.
 type ResponseHandler struct {
 	WriteToBody func() []byte
 	StatusCode  int

@@ -1,9 +1,9 @@
 package mock_test
 
 import (
+	"io/ioutil"
 	"net/http"
 	"testing"
-	"io/ioutil"
 
 	"github.com/Buzzvil/go-test/mock"
 )
@@ -11,7 +11,9 @@ import (
 func TestMockRequest(t *testing.T) {
 	testBody := "Hello world"
 
+	//Define httpClient you want to add a patch.
 	httpClient := http.DefaultClient
+	//Define a target server with domain and add ResponseHandlers. ResponseHandler contains a mock response and a request should be handled.
 	testServer := mock.NewTargetServer("google.com").AddResponseHandler(&mock.ResponseHandler{
 		WriteToBody: func() []byte {
 			return []byte(testBody)
@@ -20,6 +22,7 @@ func TestMockRequest(t *testing.T) {
 		Method:     http.MethodGet,
 		StatusCode: 400,
 	})
+	//After PatchClient, every http request using the httpClient will handle the mock request.
 	clientPatcher := mock.PatchClient(httpClient, testServer)
 
 	res := validateAndGetResponse(t, httpClient, 400)
@@ -30,7 +33,7 @@ func TestMockRequest(t *testing.T) {
 	} else if testBody != string(bodyData) {
 		t.Fatalf("TestMockRequest() - test: %s, body: %s", testBody, bodyData)
 	}
-
+	//RemovePatch will remove all mock handlers from the httpClient.
 	clientPatcher.RemovePatch()
 
 	validateAndGetResponse(t, httpClient, 200)
