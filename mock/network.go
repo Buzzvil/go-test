@@ -15,7 +15,7 @@ type ClientPatcher struct {
 
 //PatchClient will replace the original transport with mock transport.
 //It will return ClientPatcher for remove the mock transport after using it.
-func PatchClient(httpClient *http.Client, targetServers ...*targetServer) *ClientPatcher {
+func PatchClient(httpClient *http.Client, targetServers ...*TargetServer) *ClientPatcher {
 
 	t := &transportCarrier{
 		OriginalTransport: httpClient.Transport,
@@ -37,19 +37,19 @@ func PatchClient(httpClient *http.Client, targetServers ...*targetServer) *Clien
 	return patcher
 }
 
-//NetTargetServer will returns targetServer with the host.
-func NewTargetServer(host string) *targetServer {
+//NetTargetServer will returns TargetServer with the host.
+func NewTargetServer(host string) *TargetServer {
 	if host == "" {
 		panic("Host should be defined.")
 	}
 
-	return &targetServer{
+	return &TargetServer{
 		Host: host,
 	}
 }
 
-//AddResponseHandler will add ResponseHandler to the targetServer.
-func (s *targetServer) AddResponseHandler(r *ResponseHandler) *targetServer {
+//AddResponseHandler will add ResponseHandler to the TargetServer.
+func (s *TargetServer) AddResponseHandler(r *ResponseHandler) *TargetServer {
 	if r.WriteToBody == nil {
 		panic("WriteToBody of resHandler should be defined.")
 	}
@@ -71,7 +71,7 @@ func (httpReq *ClientPatcher) RemovePatch() {
 	httpReq.httpClient.Transport = httpReq.OriginalTransport
 }
 
-type targetServer struct {
+type TargetServer struct {
 	Host             string
 	ResponseHandlers []*ResponseHandler
 }
@@ -85,7 +85,7 @@ type ResponseHandler struct {
 }
 
 type transportCarrier struct {
-	TargetServers     []*targetServer
+	TargetServers     []*TargetServer
 	OriginalTransport http.RoundTripper
 }
 
